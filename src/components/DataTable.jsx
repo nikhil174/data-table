@@ -1,0 +1,240 @@
+import React, { useEffect, useState } from 'react';
+import Box from '@mui/material/Box';
+import { Button, Checkbox, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Pagination } from '@mui/material';
+import { DeleteOutline, EditOutlined } from '@mui/icons-material';
+import { red } from '@mui/material/colors';
+import axios from 'axios';
+import EditDialog from './EditDialog';
+
+const DataTable = () => {
+  const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [search, setSearch] = useState('');
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 10;
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editedRowData, setEditedRowData] = useState(null);
+
+  // Function to open the edit dialog
+  const handleEdit = (rowID) => {
+    const rowToEdit = data.find((row) => row.id === rowID);
+    setEditedRowData(rowToEdit);
+    setIsEditDialogOpen(true);
+  };
+
+  // Function to save the edited data
+  const saveEditedData = () => {
+    // Update the data state with the edited data
+    if (editedRowData) {
+      setData((prevData) =>
+        prevData.map((row) =>
+          row.id === editedRowData.id ? { ...row, ...editedRowData } : row
+        )
+      );
+    }
+    setIsEditDialogOpen(false);
+    setEditedRowData(null);
+  };
+
+  // Function to close the edit dialog without saving
+  const closeEditDialog = () => {
+    setIsEditDialogOpen(false);
+    setEditedRowData(null);
+  };
+
+  const columns = [
+    {
+      id: 'name',
+      label: 'Name',
+      minWidth: 250,
+    },
+    {
+      id: 'email',
+      label: 'Email',
+      minWidth: 250,
+    },
+    {
+      id: 'role',
+      label: 'Role',
+      minWidth: 200,
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      minWidth: 200,
+    },
+  ];
+
+  const handleDelete = (rowID) => {
+    const updatedData = data.filter((row) => rowID !== (row.id));
+    const updatedFilteredData = filteredData.filter((row) => rowID !== (row.id));
+    setData(updatedData);
+    setFilteredData(updatedFilteredData);
+    setSearch('');
+    setPage(1);
+    setSelectedRows([]);
+  };
+
+  const deleteSelected = () => {
+    const updatedData = data.filter((row) => !selectedRows.includes(row.id));
+    const updatedFilteredData = filteredData.filter((row) => !selectedRows.includes(row.id));
+    setData(updatedData);
+    setFilteredData(updatedFilteredData);
+    setSearch('');
+    setPage(1);
+    setSelectedRows([]);
+  };
+
+  const handleSearch = (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    let searchData = data.filter(
+      (row) =>
+        row.name.toLowerCase().includes(searchTerm) ||
+        row.email.toLowerCase().includes(searchTerm) ||
+        row.role.toLowerCase().includes(searchTerm)
+    );
+    if (searchTerm.trim().length)
+      setFilteredData(searchData);
+    else {
+      setFilteredData([]);
+    }
+    setSearch(searchTerm);
+    setPage(1);
+  };
+
+  const fetchData = async () => {
+    try {
+      const response = await axios.get('https://geektrust.s3-ap-southeast-1.amazonaws.com/adminui-problem/members.json');
+      setData(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const filteredRowCount = search.trim().length ? filteredData.length : data.length;
+  const totalPages = Math.ceil(filteredRowCount / rowsPerPage);
+
+  const handleChangePage = (value) => {
+    setPage(value);
+  };
+
+  return (
+    <Box>
+      <TextField
+        variant="outlined"
+        label="Search by name, email, or role"
+        value={search}
+        onChange={handleSearch}
+        fullWidth
+        style={{ marginBottom: '16px' }}
+      />
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>
+                <Checkbox
+                  color="primary"
+                  checked={selectedRows.length === (filteredData.length > 0 ? filteredData : data).slice((page - 1) * rowsPerPage, (page) * rowsPerPage).length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      const selectedIds = (filteredData.length > 0 ? filteredData : data)
+                        .slice((page - 1) * rowsPerPage, (page) * rowsPerPage)
+                        .map((row) => row.id);
+                      setSelectedRows(selectedRows.concat(selectedIds));
+                    } else {
+                      setSelectedRows([]);
+                    }
+                  }}
+                />
+              </TableCell>
+              {columns.map((column) => (
+                <TableCell style={{
+                  color: 'black', fontWeight: '700',
+                }} key={column.id}>{column.label}</TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {(search.trim().length > 0 ? filteredData : data)
+              .slice((page - 1) * rowsPerPage, (page) * rowsPerPage)
+              .map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>
+                    <Checkbox
+                      color="primary"
+                      checked={selectedRows.includes(row.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedRows([...selectedRows, row.id]);
+                        } else {
+                          setSelectedRows(selectedRows.filter((id) => id !== row.id));
+                        }
+                      }}
+                    />
+                  </TableCell>
+                  {columns.map((column, idx) => {
+                    if (column.id !== 'actions')
+                      return <TableCell key={`${idx}${column.id}`}>{row[column.id]}</TableCell>
+                    else
+                      return <TableCell key={`${idx}${column.id}`}>
+                        <IconButton
+                          onClick={() => handleEdit(row.id)}
+                          color="success"
+                          variant="outlined"
+                        >
+                          <EditOutlined />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => handleDelete(row.id)}
+                          sx={{ color: red[500] }}
+                          variant="outlined"
+                        >
+                          <DeleteOutline />
+                        </IconButton>
+                      </TableCell>
+
+                  })}
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Table>
+        <TableBody>
+          <TableRow>
+            <TableCell colSpan={columns.length + 2}>
+              <Button
+                variant="contained"
+                onClick={deleteSelected}
+                style={{ marginTop: '16px', backgroundColor: 'red', color: 'white' }}
+              >
+                Delete Selected
+              </Button>
+            </TableCell>
+            <TableCell colSpan={columns.length + 2}>
+              <Pagination style={{ padding: 20, width: '100%', display: 'flex', justifyContent: 'center' }}
+                page={page}
+                count={totalPages}
+                onChange={(_, value) => handleChangePage(value)} />
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+      <EditDialog
+        isEditDialogOpen={isEditDialogOpen}
+        closeEditDialog={closeEditDialog}
+        editedRowData={editedRowData}
+        setEditedRowData={setEditedRowData}
+        saveEditedData={saveEditedData}
+      />
+    </Box>
+  );
+};
+
+export default DataTable;

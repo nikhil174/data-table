@@ -3,19 +3,40 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.14.13",
+    "@mui/material": "^5.14.13",
+    "@mui/x-data-grid": "^6.16.2",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "axios": "^0.27.2",
+    "jest": "^27.5.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
+    "react-testing-library": "^8.0.1",
     "web-vitals": "^2.1.4"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "jest": "^27.5.1",
+    "react-testing-library": "^8.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "test:unit": "react-scripts test --env=jsdom",
+    "test:unit:coverage": "react-scripts test --env=jsdom --coverage",
+    "test:unit:watch": "react-scripts test --env=jsdom --watch",
+    "test:unit:update": "react-scripts test --env=jsdom --updateSnapshot",
+    "test:unit:interactive": "react-scripts test --env=jsdom --watchAll"
   },
   "eslintConfig": {
     "extends": [
