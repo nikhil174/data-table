@@ -1,0 +1,22 @@
+.selected-row {
+    /* Light gray background color */
+    background-color: #f2f2f2;
+}
+
+/* Styles for the grid container */
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 3fr 1fr;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-evenly;
+    margin-top: 16px;
+  }
+  
+  /* Media query for mobile screens (width <= 600px) */
+  @media screen and (max-width: 600px) {
+    .grid-container {
+      grid-template-columns: 1fr; /* Display elements in a single column for mobile screens */
+      justify-content: center;
+    }
+  }

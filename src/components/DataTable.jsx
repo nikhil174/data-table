@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import './DataTable.css';
 import Box from '@mui/material/Box';
 import { Button, Checkbox, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Pagination } from '@mui/material';
 import { DeleteOutline, EditOutlined } from '@mui/icons-material';
@@ -112,6 +113,40 @@ const DataTable = () => {
     }
   };
 
+  const isAllPageRowsSelected = () => {
+    if (filteredData.length > 0) {
+      const currentPageRows = filteredData.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+      return currentPageRows.length > 0 && currentPageRows.every(row => selectedRows.includes(row.id));
+    } else {
+      const currentPageRows = data.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+      return currentPageRows.length > 0 && currentPageRows.every(row => selectedRows.includes(row.id));
+    }
+  };
+
+  const toggleAllRows = () => {
+    if (isAllPageRowsSelected()) {
+      // If all rows on the current page are selected, unselect them
+      if (filteredData.length > 0) {
+        const currentPageRows = filteredData.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+        setSelectedRows(selectedRows.filter(id => !currentPageRows.map(row => row.id).includes(id)));
+      } else {
+        const currentPageRows = data.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+        setSelectedRows(selectedRows.filter(id => !currentPageRows.map(row => row.id).includes(id)));
+      }
+    } else {
+      // If not all rows on the current page are selected, select them
+      if (filteredData.length > 0) {
+        const currentPageRows = filteredData.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+        const selectedIds = currentPageRows.map(row => row.id);
+        setSelectedRows(selectedRows.concat(selectedIds));
+      } else {
+        const currentPageRows = data.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+        const selectedIds = currentPageRows.map(row => row.id);
+        setSelectedRows(selectedRows.concat(selectedIds));
+      }
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -140,17 +175,8 @@ const DataTable = () => {
               <TableCell>
                 <Checkbox
                   color="primary"
-                  checked={selectedRows.length === (filteredData.length > 0 ? filteredData : data).slice((page - 1) * rowsPerPage, (page) * rowsPerPage).length}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      const selectedIds = (filteredData.length > 0 ? filteredData : data)
-                        .slice((page - 1) * rowsPerPage, (page) * rowsPerPage)
-                        .map((row) => row.id);
-                      setSelectedRows(selectedRows.concat(selectedIds));
-                    } else {
-                      setSelectedRows([]);
-                    }
-                  }}
+                  checked={isAllPageRowsSelected()}
+                  onChange={toggleAllRows}
                 />
               </TableCell>
               {columns.map((column) => (
@@ -164,7 +190,7 @@ const DataTable = () => {
             {(search.trim().length > 0 ? filteredData : data)
               .slice((page - 1) * rowsPerPage, (page) * rowsPerPage)
               .map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} className={selectedRows.includes(row.id) ? 'selected-row' : ''}>
                   <TableCell>
                     <Checkbox
                       color="primary"
@@ -205,27 +231,35 @@ const DataTable = () => {
           </TableBody>
         </Table>
       </TableContainer>
-      <Table>
-        <TableBody>
-          <TableRow>
-            <TableCell colSpan={columns.length + 2}>
-              <Button
-                variant="contained"
-                onClick={deleteSelected}
-                style={{ marginTop: '16px', backgroundColor: 'red', color: 'white' }}
-              >
-                Delete Selected
-              </Button>
-            </TableCell>
-            <TableCell colSpan={columns.length + 2}>
-              <Pagination style={{ padding: 20, width: '100%', display: 'flex', justifyContent: 'center' }}
-                page={page}
-                count={totalPages}
-                onChange={(_, value) => handleChangePage(value)} />
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
+      <div className="grid-container">
+        <Button
+          variant="contained"
+          onClick={deleteSelected}
+          style={{ backgroundColor: 'red', color: 'white' }}
+        >
+          Delete Selected
+        </Button>
+        <Button
+          color="primary"
+          onClick={() => handleChangePage(1)}
+        >
+          go to first page
+        </Button>
+        <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <Pagination
+          className='paginationContainer'
+          page={page}
+          count={totalPages}
+          onChange={(_, value) => handleChangePage(value)}
+        />
+        </Box>
+        <Button
+          color="primary"
+          onClick={() => handleChangePage(totalPages)}
+        >
+          go to last page
+        </Button>
+      </div>
       <EditDialog
         isEditDialogOpen={isEditDialogOpen}
         closeEditDialog={closeEditDialog}
